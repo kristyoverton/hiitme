@@ -1,0 +1,134 @@
+<!DOCTYPE HTML>
+<html lang="en" ng-app="hiitme">
+<head>
+	<title>HIIT Me: Online Interval Timer</title>
+	<meta charset="utf-8">
+	<link href='http://fonts.googleapis.com/css?family=Bangers|EB+Garamond' rel='stylesheet' type='text/css'>
+	<style type="text/css">
+		body {
+			font-family: 'EB Garamond', serif;	
+		}
+
+		h1 {
+			font-family: 'Bangers', cursive;
+		}
+
+		#intervals,#finished {
+			border: 1px solid silver;
+			border-radius: 10px;
+			text-align: center;
+			padding:20px;
+		}
+
+		#finished {
+			background-color: rgba(0,255,0,0.4);
+		}
+	</style>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+	<script type="text/javascript">
+		
+		$(document).ready(function(){
+			$(document).on('submit',"#settings",function() {
+				$.post(
+	        		$(this).attr('action'),
+	        		$(this).serialize(),
+			        function(data){
+			          $('#settings').html('<h1>Get ready...</h1>')
+			          var cur = 0;
+			          var lengthHII = data.lengthHIIs*1000;
+			          var lengthRest = data.LengthRests*1000;
+			          var timer;
+			          var timeRemaining = lengthHII;
+			          var audio = new Audio('woop.wav');
+
+			          var doRestInterval = function() {
+			          	audio.play();
+			          	$('h1').css('font-family','EB Garamond');
+			          	$('#intervals').css('background-color', 'rgba(0,255,255,0.4)');
+			       		clearInterval(timer);
+			       		timeRemaining = lengthRest;
+			       		$('#timer').html(timeRemaining/1000);
+			       		timer = setInterval(countdown,1000);
+			          	$('#typeOfInterval').html("rest");
+			          	$('#totalIntervals').html(data.numberIntervals-1);
+			          	setTimeout(doHI,lengthRest);
+			          }
+
+			          var doDone = function() {
+			          	audio.play();
+			          		$('#intervals').hide();
+			          		$('#finished').show();
+			          }
+
+			          var countdown = function() {
+			          	timeRemaining -= 1000;
+			          	$('#timer').html(timeRemaining/1000);
+			          }
+			          
+			          setTimeout(doHI,5000);
+
+			          function doHI () {
+			          	if($('#intervals').css('display')=='none') {
+			          		$('#settings').hide();
+			          		$('#intervals').show();
+			          	}
+			          	audio.play();
+			          	$('h1').css('font-family','Bangers');
+			          	$('#intervals').css('background-color', 'rgba(255,255,0,0.4)');
+		          		clearInterval(timer);
+			          	cur++;
+			          	timeRemaining = lengthHII;
+			          	$('#timer').html(timeRemaining/1000);
+			          	if(cur <= data.numberIntervals) {
+			          		timer = setInterval(countdown,1000);
+			          		$('#totalIntervals').html(data.numberIntervals);
+			          		$('#typeOfInterval').html("high intensity");
+			          		$('#currentInterval').html(cur);
+			          		if(cur < data.numberIntervals) {
+			          			setTimeout(doRestInterval,lengthHII);
+			          		} else
+			          			setTimeout(doDone,lengthHII);
+			          	} 
+			          }
+			          	
+			          
+			          
+			        },
+			        "json"
+			      );
+			      return false;
+		  });
+		      
+		   
+		});
+					
+
+	</script>
+</head>
+<body>
+	<div style="width:60%;margin:10% auto">
+		<div id="settings">
+			<h1>Choose Your Settings!</h1>
+			<p>(Workout will begin 5 seconds after clicking "Let's Go!" with a high intensity interval and will end with a high intensity interval. Warming up and cooling down are <strong>strongly</strong> recommended.)</p>
+			<form id="settings" action="intervals.php" method="post">
+				<label for="numberIntervals">Number of High Intensity Intervals: </label>
+				<input type="number" name="numberIntervals" value="12" min="1"><br><br>
+
+				<label for="numberIntervals">Length of High Intensity Intervals (seconds): </label>
+				<input type="number" name="lengthHIIs" value="15" min="1"><br><br>
+
+				<label for="numberIntervals">Length of Rest Intervals (seconds): </label>
+				<input type="number" name="LengthRests" value="60" min="1"><br><br>
+				<input type="submit" value="Let's Go!">
+			</form>
+		</div>
+		<div id="intervals" style="display:none">
+			<h1><span id="typeOfInterval"></span> interval <span id="currentInterval"></span> of <span id="totalIntervals"></span></h1>
+			<h1 id="timer"></h1>
+		</div>
+		<div id="finished" style="display:none">
+			<h1>You did it!</h1>
+		</div>
+	</div>
+</body>
+</html>
